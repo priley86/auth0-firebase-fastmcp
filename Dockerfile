@@ -9,16 +9,23 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv for dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Install Poetry
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VERSION=1.8.4
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
+
+# Configure Poetry to not create virtual environments (use system Python in container)
+RUN poetry config virtualenvs.create false
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies (production only)
-RUN uv sync --frozen --no-dev
+RUN poetry install --no-dev --no-interaction --no-ansi
 
 # Copy application code
 COPY src ./src
@@ -37,4 +44,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3001/.well-known/oauth-protected-resource').read()" || exit 1
 
 # Run the MCP server in production mode
-CMD ["uv", "run", "python", "-m", "src.server"]
+CMD ["python", "-m", "src.server"]

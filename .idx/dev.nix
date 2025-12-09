@@ -7,17 +7,13 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.python313
-    pkgs.uv
-    pkgs.pipx
+    pkgs.poetry
   ];
   
   # Sets environment variables in the workspace
   env = {
     # Set Python to use Python 3.13 from nix
     PYTHON = "${pkgs.python313}/bin/python3";
-    
-    # Increase UV HTTP timeout for slower network connections
-    UV_HTTP_TIMEOUT = "120";
     
     # MCP Server URL (uses Firebase Studio's $WEB_HOST for dynamic URL)
     MCP_SERVER_URL = "https://3001-$WEB_HOST";
@@ -36,7 +32,7 @@
       previews = {
         # MCP Server preview on port 3001
         web = {
-          command = ["uv" "run" "python" "-m" "src.server"];
+          command = ["poetry" "run" "python" "-m" "src.server"];
           manager = "web";
           env = {
             PORT = "3001";
@@ -52,8 +48,8 @@
         # Copy environment file
         copy-env = "cp .env.example .env";
         
-        # Install dependencies using uv
-        install-deps = "uv sync";
+        # Install dependencies using poetry
+        install-deps = "poetry install";
         
         # Open editors for the following files by default, if they exist:
         default.openFiles = [ 
@@ -67,7 +63,7 @@
       # Runs when the workspace is (re)started
       onStart = {
         # Start the MCP server
-        start-server = "uv run python -m src.server";
+        start-server = "poetry run python -m src.server";
       };
     };
   };

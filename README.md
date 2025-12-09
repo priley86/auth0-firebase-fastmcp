@@ -29,17 +29,48 @@ poetry install
 
 For detailed instructions on setting up your Auth0 tenant for MCP server integration, please refer to the [Auth0 Tenant Setup guide](https://github.com/auth0-samples/auth0-ai-samples/tree/main/auth-for-mcp/fastmcp-mcp-js/README.md#auth0-tenant-setup) in the FastMCP example.
 
+Simplified instructions for this starter:
+
+1. Authenticate with Auth0 CLI:
+```
+auth0 login --scopes "read:client_grants,create:client_grants,delete:client_grants,read:clients,create:clients,update:clients,read:resource_servers,create:resource_servers,update:resource_servers,read:roles,create:roles,update:roles,update:tenant_settings,read:connections,update:connections"
+```
+and verify you are using the correct Auth0 tenant after:
+```
+auth0 tenants list
+```
+
+2. Enable Dynamic Client Registration (DCR) and improved user consent experience:
+```
+auth0 tenant-settings update set flags.enable_dynamic_client_registration flags.use_scope_descriptions_for_consent
+```
+
+3. Create an API (Resource Server) for your MCP Server with Auth0
+```
+auth0 api post resource-servers --data '{
+  "identifier": "auth0-fastmcp-api",
+  "name": "MCP Tools API",
+  "signing_alg": "RS256",
+  "token_dialect": "rfc9068_profile_authz",
+  "enforce_policies": true,
+  "scopes": [
+    {"value": "tool:whoami", "description": "Access the WhoAmI tool"},
+    {"value": "tool:greet", "description": "Access the Greeting tool"}
+  ]
+}'
+```
+
 
 ## Configuration
 
-Rename `.env.example` to `.env` and configure the domain and audience:
+Copy `.env.example` to `.env` and configure the domain and audience:
 
 ```
 # Auth0 tenant domain
 AUTH0_DOMAIN=example-tenant.us.auth0.com
 
 # Auth0 API Identifier
-AUTH0_AUDIENCE=http://localhost:3001/
+AUTH0_AUDIENCE=auth0-fastmcp-api
 ```
 
 With the configuration in place, the example can be started by running:
