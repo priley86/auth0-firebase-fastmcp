@@ -1,6 +1,15 @@
-# Example FastMCP MCP Server with Auth0 Integration
+# Auth0 + Firebase + FastMCP MCP Server Starter
 
 This example demonstrates how to create a FastMCP MCP server that uses Auth0 for authentication using the `auth0-api-python` library.
+
+[![Open in IDX](https://cdn.idx.dev/btn/open_dark_32@2x.png)](https://idx.google.com/new?template=https://github.com/priley86/auth0-firebase-fastmcp)
+
+## Features
+
+- 🔐 **Secure Authentication** with Auth0 OAuth 2.0
+- 🚀 **FastMCP** - High-performance MCP server built on Starlette
+- 🔧 **Firebase Studio Ready** - Pre-configured for Firebase Studio (Project IDX)
+- ☁️ **Cloud Run Deployment** - Production-ready deployment scripts for Google Cloud
 
 ## Available Tools
 
@@ -75,3 +84,51 @@ curl -X POST http://localhost:3001/mcp \
 ```
 
 **Note:** Use the MCP Inspector or other MCP-compatible clients for comprehensive testing.
+
+## Firebase Studio (Project IDX)
+
+This project is pre-configured for [Firebase Studio](https://firebase.google.com/docs/studio) (formerly Project IDX).
+
+### Quick Start
+
+1. Click the "Open in Firebase Studio" button above
+2. Wait for the workspace to initialize (dependencies will be installed automatically)
+3. Configure your `.env` file with your Auth0 credentials
+4. The MCP server will start automatically!
+
+> ⚠️ **Note for Firebase Studio users**: When testing with MCP Inspector, use the Firebase Studio preview URL (e.g., `https://3001-xxx.idx.dev/mcp`) as your MCP endpoint.
+
+## Deployment
+
+This project includes production-ready deployment scripts for Google Cloud Run.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on:
+
+- Setting up Google Cloud Platform
+- Configuring production environment variables
+- Deploying to Cloud Run
+- Monitoring and troubleshooting
+
+### Quick Deploy
+
+```bash
+# 1. Create production environment file
+cp .env.example .env.production
+
+# 2. Edit .env.production with your credentials
+# - Set GCP_PROJECT_ID, AUTH0_DOMAIN, AUTH0_AUDIENCE
+
+# 3. Deploy to Cloud Run
+./scripts/deploy-mcp-server.sh
+```
+
+## Learn More
+
+- [Auth0 Documentation](https://auth0.com/docs)
+- [FastMCP Documentation](https://github.com/jlowin/fastmcp)
+- [Firebase Studio Documentation](https://firebase.google.com/docs/studio)
+- [Cloud Run Documentation](https://cloud.google.com/run/docs)
+
+## License
+
+This project is based on the [Auth0 AI Samples](https://github.com/auth0-samples/auth0-ai-samples) and is provided under the MIT License.
