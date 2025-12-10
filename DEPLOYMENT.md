@@ -145,6 +145,8 @@ Open the the Auth Settings, and use the Quick OAuth flow to acquire an access to
 
 After, ensure this access token is provided in your **Authentication** headers before hitting the **Connect** button. Now you should be to interface with your MCP Server using MCP Inspector.
 
+![Screen 6](public/screen6.png)
+
 ### Using cURL
 
 ```bash
