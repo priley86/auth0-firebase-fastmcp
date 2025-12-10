@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Poetry
 ENV POETRY_HOME=/opt/poetry
-ENV POETRY_VERSION=1.8.4
+ENV POETRY_VERSION=2.1.4
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
 
@@ -25,7 +25,7 @@ RUN poetry config virtualenvs.create false
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies (production only)
-RUN poetry install --no-dev --no-interaction --no-ansi
+RUN poetry install --only main --no-interaction --no-ansi --no-root
 
 # Copy application code
 COPY src ./src
