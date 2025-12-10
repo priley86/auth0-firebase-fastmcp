@@ -5,9 +5,7 @@ import logging
 from collections.abc import AsyncIterator
 
 from starlette.applications import Starlette
-from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.routing import Mount
 
 from .auth0 import Auth0Mcp
@@ -49,10 +47,6 @@ starlette_app = Starlette(
     ],
     lifespan=lifespan,
     exception_handlers=auth0_mcp.exception_handlers(),
-    # Allow any host (needed for Cloud Run and other hosting platforms)
-    middleware=[
-        Middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-    ]
 )
 
 # Wrap ASGI application with CORS middleware to expose Mcp-Session-Id header
