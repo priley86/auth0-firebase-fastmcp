@@ -47,11 +47,8 @@
         install-deps = "poetry install";
         
         # Open editors for the following files by default, if they exist:
-        default.openFiles = [ 
-          ".idx/dev.nix" 
-          "README.md" 
-          "src/server.py"
-          "src/tools.py"
+        default.openFiles = [
+          "README.md"
         ];
       };
       
