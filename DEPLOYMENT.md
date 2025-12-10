@@ -53,6 +53,7 @@ Edit `.env.production` with your credentials:
 # Google Cloud Platform
 GCP_PROJECT_ID="your-project-id"
 GCP_REGION="us-central1"
+SERVICE_NAME=mcp-server
 
 # Auth0 Configuration
 AUTH0_DOMAIN="your-tenant.auth0.com"
@@ -97,6 +98,26 @@ MCP Server URL: https://mcp-server-xxx-uc.a.run.app
 MCP_SERVER_URL="https://mcp-server-xxx-uc.a.run.app"
 ```
 
+**Important:** you'll also want to create a new Resource Server in Auth0 to use for your production `AUTH0_AUDIENCE`.
+```
+auth0 api post resource-servers --data '{
+  "identifier": "https://mcp-server-xxx-uc.a.run.app/",  # use your Production deployed URL
+  "name": "MCP Tools API",
+  "signing_alg": "RS256",
+  "token_dialect": "rfc9068_profile_authz",
+  "enforce_policies": true,
+  "scopes": [
+    {"value": "tool:whoami", "description": "Access the WhoAmI tool"},
+    {"value": "tool:greet", "description": "Access the Greeting tool"}
+  ]
+}'
+```
+
+**Update `.env.production` with this URL:**
+```bash
+AUTH0_AUDIENCE="https://mcp-server-xxx-uc.a.run.app/"
+```
+
 ### Step 3: Redeploy with Updated URL (Optional)
 
 If you want the server to know its own URL for OAuth metadata:
@@ -118,19 +139,48 @@ In the MCP Inspector:
 - **URL**: `https://mcp-server-xxx-uc.a.run.app/mcp`
 - **Connection Type**: Via Proxy
 
+Open the the Auth Settings, and use the Quick OAuth flow to acquire an access token.
+
+![Screen 4](public/screen4.png)
+
+After, ensure this access token is provided in your **Authentication** headers before hitting the **Connect** button. Now you should be to interface with your MCP Server using MCP Inspector.
+
 ### Using cURL
 
 ```bash
-# Test OAuth resource metadata
-curl https://mcp-server-xxx-uc.a.run.app/.well-known/oauth-protected-resource
+# Check server status - test OAuth resource metadata
+curl -v https://mcp-server-xxx-uc.a.run.app/.well-known/oauth-protected-resource
 
-# Test MCP initialization (requires valid Auth0 access token)
+# List available tools (requires valid Auth0 access token)
 curl -X POST https://mcp-server-xxx-uc.a.run.app/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "curl-test", "version": "1.0.0"}}}'
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
+
+# Call get_datetime tool (requires Auth0 access token, but no specific scopes)
+curl -X POST https://mcp-server-xxx-uc.a.run.app/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_datetime", "arguments": {}}}'
+
+# Call whoami tool (requires Auth0 access token with tool:whoami scope)
+curl -X POST https://mcp-server-xxx-uc.a.run.app/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "whoami", "arguments": {}}}'
+
+# Call greet tool (requires Auth0 access token with tool:greet scope)
+curl -X POST https://mcp-server-xxx-uc.a.run.app/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "greet", "arguments": {"name": "World"}}}'
 ```
+
+**Note:** Replace `YOUR_ACCESS_TOKEN` with a valid Auth0 access token. See the README.md for instructions on creating a test application and acquiring an access token, or use an access token acquired from MCP Inspector.
 
 ## Verification
 

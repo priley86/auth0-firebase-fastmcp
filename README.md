@@ -19,13 +19,16 @@ The server exposes the following tools:
 - `greet` - Personalized greeting demonstrating authenticated tool access
 - `get_datetime` - Returns the current UTC date and time (no scope required)
 
-## Install dependencies
+## Quick Start
 
-```
-poetry install
-```
+1. Click the "Open in Firebase Studio" button above
+2. Wait for the workspace to initialize (dependencies will be installed automatically)
+3. Configure your `.env` file with your Auth0 credentials (see below sections on how to configure this)
+4. The MCP server will start automatically! See the Testing section below for instructions on testing in Firebase Studio.
 
 ## Auth0 Tenant Setup
+
+Create an [Auth0 account](https://auth0.com/signup?onboard_app=auth_for_aa) to setup an Auth0 tenant if you don't yet have one.
 
 For detailed instructions on setting up your Auth0 tenant for MCP server integration, please refer to the [Auth0 Tenant Setup guide](https://github.com/auth0-samples/auth0-ai-samples/tree/main/auth-for-mcp/fastmcp-mcp-js/README.md#auth0-tenant-setup) in the FastMCP example.
 
@@ -48,7 +51,7 @@ auth0 tenant-settings update set flags.enable_dynamic_client_registration flags.
 3. Create an API (Resource Server) for your MCP Server with Auth0
 ```
 auth0 api post resource-servers --data '{
-  "identifier": "auth0-fastmcp-api",
+  "identifier": "http://localhost:3001/",
   "name": "MCP Tools API",
   "signing_alg": "RS256",
   "token_dialect": "rfc9068_profile_authz",
@@ -60,6 +63,13 @@ auth0 api post resource-servers --data '{
 }'
 ```
 
+4. Ensure Resource Parameter Compatibility Profile
+
+Ensure you can use `resource` parameters when requesting access tokens for a resource server. This is an **Early** access feature.
+
+Go to your Auth0 tenant **Settings** and navigate to the **Advanced** tab. Make sure to enable the **Resource Parameter Compatibility** Profile setting.
+
+![Screen 5](public/screen5.png)
 
 ## Configuration
 
@@ -70,64 +80,53 @@ Copy `.env.example` to `.env` and configure the domain and audience:
 AUTH0_DOMAIN=example-tenant.us.auth0.com
 
 # Auth0 API Identifier
-AUTH0_AUDIENCE=auth0-fastmcp-api
+AUTH0_AUDIENCE=http://localhost:3001/
 ```
+**Note:** the `AUTH0_AUDIENCE` should match the `identifier` you used when creating the resource server above. The `AUTH0_DOMAIN` can be found in your tenant settings.
 
-With the configuration in place, the example can be started by running:
+The other settings can remain defaulted if using the Firebase Studio Preview:
+```
+# URL where this MCP server is accessible (used for OAuth metadata)
+MCP_SERVER_URL=http://localhost:3001
 
-```bash
-poetry run python -m src.server
+# Port the server will listen on
+PORT=3001
+
+# Enable debug mode for detailed logging
+DEBUG=false
+
+# CORS origins - comma-separated list of allowed origins (* for all)
+CORS_ORIGINS=*
+
+# Google Cloud Platform Configuration (for production deployment)
+# GCP_PROJECT_ID=your-project-id
+# GCP_REGION=us-central1
+# SERVICE_NAME=mcp-server
 ```
 
 ## Testing
 
-Use an MCP client like [MCP Inspector](https://github.com/modelcontextprotocol/inspector) to test your server interactively:
+### Testing in Firebase Studio
 
-```bash
-npx @modelcontextprotocol/inspector
-```
+For local testing with Firebase Studio, you can visit your Auth0 tenant at [manage.auth0.com](https://manage.auth0.com) to create a test application and acquire an access token for use with your FastMCP Server.
 
-The server will start up and the UI will be accessible at http://localhost:6274.
+**Note:** this is not required if using a deployed instance. You can test this easily with MCP Inspector using DCR (Dynamic Client Registration).
 
-In the MCP Inspector, select `Streamable HTTP` as the `Transport Type`, enter `http://localhost:3001/mcp` as the URL, and select `Via Proxy` for `Connection Type`.
+1. Visit the Applications -> APIs page and select your MCP Tools API.
 
-### Using cURL
+Within the **Test** tab, use the **Create & Authorize Test Application** button to create a test client.
 
-You can use cURL to verify that the server is running:
+![Screen 1](public/screen1.png)
 
-```bash
-# Test that the server is running and accessible - check OAuth resource metadata
-curl -v http://localhost:3001/.well-known/oauth-protected-resource
+2. Enable permissions (scopes) for your client.
 
-# Test MCP initialization (requires valid Auth0 access token)
-curl -X POST http://localhost:3001/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "curl-test", "version": "1.0.0"}}}'
+Within the M2M Applications tab, ensure your MCP Tools API (Test Application) has the `tool:whoami` and `tool:great` permissions. Once enabled, hit the **Update** button and save these permissions.
+![Screen 2](public/screen2.png)
 
-# Test get_datetime tool (no scope required) - outputs ISO string like 2025-10-31T14:12:03.123Z
-curl -X POST http://localhost:3001/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -d '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_datetime", "arguments": {}}}'
-```
+3. Request an access token.
 
-**Note:** Use the MCP Inspector or other MCP-compatible clients for comprehensive testing.
-
-## Firebase Studio (Project IDX)
-
-This project is pre-configured for [Firebase Studio](https://firebase.google.com/docs/studio) (formerly Project IDX).
-
-### Quick Start
-
-1. Click the "Open in Firebase Studio" button above
-2. Wait for the workspace to initialize (dependencies will be installed automatically)
-3. Configure your `.env` file with your Auth0 credentials
-4. The MCP server will start automatically!
-
-> ⚠️ **Note for Firebase Studio users**: When testing with MCP Inspector, use the Firebase Studio preview URL (e.g., `https://3001-xxx.idx.dev/mcp`) as your MCP endpoint.
+Lastly, you can request an access token by navigating back to the **Test** tab. Copy the access token in the response.
+![Screen 3](public/screen3.png)
 
 ## Deployment
 
@@ -147,10 +146,22 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on:
 cp .env.example .env.production
 
 # 2. Edit .env.production with your credentials
-# - Set GCP_PROJECT_ID, AUTH0_DOMAIN, AUTH0_AUDIENCE
 
 # 3. Deploy to Cloud Run
 ./scripts/deploy-mcp-server.sh
+```
+
+## Running Locally
+
+Install dependencies:
+```
+poetry install
+```
+
+With the `.env` configuration file in place, the example can be started by running:
+
+```bash
+poetry run python -m src.server
 ```
 
 ## Learn More

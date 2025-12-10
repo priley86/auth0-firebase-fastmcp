@@ -8,15 +8,13 @@
   packages = [
     pkgs.python313
     pkgs.poetry
+    pkgs.nodejs_22
   ];
   
   # Sets environment variables in the workspace
   env = {
     # Set Python to use Python 3.13 from nix
     PYTHON = "${pkgs.python313}/bin/python3";
-    
-    # MCP Server URL (uses Firebase Studio's $WEB_HOST for dynamic URL)
-    MCP_SERVER_URL = "https://3001-$WEB_HOST";
   };
   
   idx = {
@@ -30,13 +28,10 @@
     previews = {
       enable = true;
       previews = {
-        # MCP Server preview on port 3001
+        # Landing page with cURL commands
         web = {
-          command = ["poetry" "run" "python" "-m" "src.server"];
+          command = ["python" "-m" "http.server" "$PORT" "--directory" ".idx"];
           manager = "web";
-          env = {
-            PORT = "3001";
-          };
         };
       };
     };
@@ -62,8 +57,8 @@
       
       # Runs when the workspace is (re)started
       onStart = {
-        # Start the MCP server
-        start-server = "poetry run python -m src.server";
+        # Start MCP server on port 3001
+        start-mcp-server = "poetry run python -m src.server";
       };
     };
   };

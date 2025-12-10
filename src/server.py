@@ -5,7 +5,9 @@ import logging
 from collections.abc import AsyncIterator
 
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.routing import Mount
 
 from .auth0 import Auth0Mcp
@@ -47,6 +49,10 @@ starlette_app = Starlette(
     ],
     lifespan=lifespan,
     exception_handlers=auth0_mcp.exception_handlers(),
+    # Allow any host (needed for Cloud Run and other hosting platforms)
+    middleware=[
+        Middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+    ]
 )
 
 # Wrap ASGI application with CORS middleware to expose Mcp-Session-Id header
@@ -55,10 +61,12 @@ starlette_app = Starlette(
 app = CORSMiddleware(
     starlette_app,
     allow_origins=config.cors_origins,
-    allow_methods=["GET", "POST", "DELETE"], # MCP streamable HTTP methods
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],  # MCP streamable HTTP methods
+    allow_headers=["*"],
+    allow_credentials=True,
     expose_headers=["Mcp-Session-Id"],
 )
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, port=config.port)
+    uvicorn.run(app, host="0.0.0.0", port=config.port)
